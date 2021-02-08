@@ -1,12 +1,8 @@
 import React from 'react'
-import axios from 'react-native-axios';
 import {
-    Text,
     View,
     Alert,
-    Platform,
     ScrollView,
-    StyleSheet,
     SafeAreaView,
     RefreshControl,
     TouchableOpacity,
@@ -15,21 +11,19 @@ import {
 import Note from '../../components/Note';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import http from '../../components/http';
+import { theme, listStyle } from '../../components/styles';
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
 
-
 export default function listNote({ navigation }) {
     const [isLoading, setIsLoading] = React.useState(true);
     const [refreshing, setRefreshing] = React.useState(false);
-    const [token, setToken] = React.useState('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNjEyNjY4NTAzLCJleHAiOjE2MTI3NTQ5MDN9.PEIU-SF9yfxi4DfY0w6UHgdBD8L0FncIHxnC6hzgCoo');
     const [notes, setNotes] = React.useState([]);
 
     React.useEffect(() => {
-        getDataUser()
-        setTimeout(() => Notes(), 2000);
+        Notes()
     }, [])
 
     const onRefresh = React.useCallback(() => {
@@ -37,23 +31,13 @@ export default function listNote({ navigation }) {
         wait(2000).then(() => setRefreshing(false));
     }, []);
 
-    const getDataUser = async () => {
-        let data = await AsyncStorage.getItem('token');
-        setToken(data);
-    }
-
-    const http = axios.create({
-        baseURL: 'https://amg-app-v1.herokuapp.com/api',
-        timeout: 5000,
-        headers: {
-            Accept: 'application/json',
-            'x-access-token': token
-        }
-    });
-
     const Notes = async () => {
-        let id = await AsyncStorage.getItem('id');
-        http.get(`post`)
+        http.get(`post`, {
+            headers: {
+                Accept: 'application/json',
+                'x-access-token': await AsyncStorage.getItem('token')
+            }
+        })
             .then(function (response) {
                 setNotes([...response.data])
                 setIsLoading(false)
@@ -95,9 +79,9 @@ export default function listNote({ navigation }) {
 
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.blankContainer}>
-                <View style={styles.centerBar}>
-                    <View style={styles.centerCircle}>
+            <SafeAreaView style={theme.blankContainer}>
+                <View style={theme.centerBar}>
+                    <View style={theme.centerCircle}>
                         <ActivityIndicator size="large" color="#b7a996" />
                     </View>
                 </View>
@@ -105,16 +89,16 @@ export default function listNote({ navigation }) {
         )
     }
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.headerSection}>
-                <TouchableOpacity style={styles.iconBox} onPress={() => navigation.push('profile')}>
+        <SafeAreaView style={theme.container}>
+            <View style={theme.headerSection}>
+                <TouchableOpacity style={theme.iconBox} onPress={() => navigation.push('profile')}>
                     <MaterialIcon
                         size={24}
                         name='person'
-                        color='black'
+                        color='Black'
                     />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBox} onPress={() => navigation.push('addNote')}>
+                <TouchableOpacity style={theme.iconBox} onPress={() => navigation.push('addNote')}>
                     <MaterialIcon
                         size={24}
                         name='add'
@@ -123,7 +107,7 @@ export default function listNote({ navigation }) {
                 </TouchableOpacity>
             </View>
             <ScrollView
-                style={styles.scrollContainer}
+                style={listStyle.scrollContainer}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -136,60 +120,3 @@ export default function listNote({ navigation }) {
         </SafeAreaView>
     )
 }
-
-
-
-const styles = StyleSheet.create({
-    blankContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#faf2d9'
-    },
-    centerBar: {
-        backgroundColor: '#573b30',
-        justifyContent: 'center',
-        borderColor: '#b7a996',
-        alignItems: 'center',
-        alignSelf: 'stretch',
-        borderWidth: 10,
-        height: 70,
-    },
-    centerCircle: {
-        width: 150,
-        height: 150,
-        borderRadius: 150 / 2,
-        backgroundColor: '#573b30',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        paddingTop: Platform.OS === 'android' ? 30 : 0,
-        backgroundColor: '#faf2d9'
-    },
-    iconBox: {
-        width: 50,
-        borderRadius: 50 / 2,
-        padding: 5,
-        marginHorizontal: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#b7a996'
-    },
-    headerSection: {
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        backgroundColor: '#573b30',
-        alignSelf: 'stretch',
-        alignItems: 'center',
-        height: 50,
-        textAlign: 'center'
-    },
-    scrollContainer: {
-        flex: 1,
-        alignSelf: 'stretch',
-        backgroundColor: '#faf2d9'
-    },
-})
